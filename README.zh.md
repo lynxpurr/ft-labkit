@@ -37,7 +37,7 @@ git clone https://github.com/lynxpurr/ft-labkit.git
 cd ft-labkit && pip install .            # 或 pip install -e .
 # labkit.toml 里的 train_python 指向的那个解释器也要能 import labkit：
 # 要么把 labkit 装进那个环境，要么先 export PYTHONPATH="$PWD" 再做下面的步骤。
-labkit --version                         # ft-labkit 0.1.0（后面括号里是实际运行的那份包的路径）
+labkit --version                         # ft-labkit 0.1.0a1（后面括号里是实际运行的那份包的路径）
 
 labkit new demo-lab                      # 用内置模板在当前目录生成 ./demo-lab
 cd demo-lab
