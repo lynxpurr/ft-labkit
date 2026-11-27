@@ -24,7 +24,8 @@ project skeleton, and nothing that launches a training or inference run.
 - `labkit close`: refuses to close a wave until its verdict is filled in, the
   evidence directory is non-empty, the day's lessons batch carries a promotion
   line, and the working tree is clean. Placeholders that merely contain the
-  words "pass" or "fail" do not count as a verdict.
+  words "pass" or "fail" do not count as a verdict, and the template's own placeholder
+  lessons batch does not count as the day's batch.
 - `labkit.gates`: `gold_gate`, `negative_controls` and `checks_gate`.
 - `labkit.evidence`: `write_new` refuses to overwrite an existing report.
 - `labkit.ckpt`: last-step computation, numeric checkpoint selection and the

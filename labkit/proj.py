@@ -255,6 +255,23 @@ _VERDICT_FILLED = (
 )
 _PLACEHOLDER_LEFT = ("待填", "TBD")
 _PROMOTION_LINE = re.compile(r"晋升记录|[Pp]romotion")
+# 一个批次：行首的二级标题到下一个行首二级标题之前。必须锚定行首——否则说明文字里
+# 引用的示例 "`## YYYY-MM-DD · XX批`" 也会被当成批次的开始。
+_BATCH_HEADING = re.compile(r"^## [^\n]*\n(?:(?!^## ).)*", re.MULTILINE | re.DOTALL)
+
+
+def _squash_lines(text: str) -> str:
+    return "\n".join(ln.strip() for ln in text.splitlines() if ln.strip())
+
+
+def _template_lessons_batch() -> str | None:
+    """模板自带的占位批次按今日日期渲染后的样子（模板读不到时返回 None，门退回不比占位）。"""
+    try:
+        text = TEMPLATE_DIR.joinpath("notes", "lessons.md").read_text(encoding="utf-8")
+    except (OSError, UnicodeDecodeError):
+        return None
+    m = _BATCH_HEADING.search(text.replace("{{DATE}}", TODAY))
+    return m.group(0) if m else None
 
 
 def _wave_section(text: str, wid: str) -> str | None:
@@ -282,13 +299,15 @@ def cmd_close(wid: str, allow_dirty: bool = False) -> int:
         return (any(rx.search(s) for rx in _VERDICT_FILLED)
                 and not any(ph in s for ph in _PLACEHOLDER_LEFT))
 
-    def _lessons_batch(s: str) -> bool:
-        return bool(s) and TODAY in s  # 今日批次（追加批制）
-
-    def _promotion_line(s: str) -> bool:
-        # 最新批次须带"晋升记录"行（含"无（首现，留观）"也算——纪律是显式决策）
-        batches = re.findall(r"## [^\n]*\n(?:(?!## ).)*", s, re.DOTALL)
-        return bool(batches) and bool(_PROMOTION_LINE.search(batches[-1]))
+    batches = _BATCH_HEADING.findall(lessons_text)
+    latest = batches[-1] if batches else ""
+    # 模板自带的占位批次带建仓当日日期和一行"晋升记录：无"，一条教训都没写时也能让下面
+    # 两道检查通过（纸门）。最新一批与模板原样渲染的一字不差，就按占位态判红。
+    placeholder = _template_lessons_batch()
+    only_placeholder = bool(latest) and placeholder is not None \
+        and _squash_lines(latest) == _squash_lines(placeholder)
+    # 最新批次须带"晋升记录"行（含"无（首现，留观）"也算——纪律是显式决策）
+    promotion_line = bool(_PROMOTION_LINE.search(latest)) and not only_placeholder
 
     def _git_clean() -> bool:
         r = subprocess.run(["git", "status", "--porcelain"],
@@ -300,10 +319,13 @@ def cmd_close(wid: str, allow_dirty: bool = False) -> int:
         "波次条目在": section is not None,
         "证据目录非空": rep.is_dir() and any(rep.iterdir()),
         "判决已落表": bool(section) and _verdict_filled(section),
-        "lessons 今日批次": _lessons_batch(lessons_text),
-        "晋升记录行": _promotion_line(lessons_text),
+        "lessons 今日批次": bool(lessons_text) and TODAY in lessons_text and not only_placeholder,
+        "晋升记录行": promotion_line,
         "git 工作区干净": allow_dirty or _git_clean(),
     }
+    if only_placeholder:
+        out("[close] notes/lessons.md 最新一批仍是模板自带的占位批次：本波教训未落账——"
+            "追加今日批次并写晋升记录（无晋升也要写明）")
     rc = gates.run_gates([gates.checks_gate(checks, name=f"close/{wid}")])
     if rc == 0:
         out(f"[close] {wid} 收尾通过：判决/证据/沉淀齐备")

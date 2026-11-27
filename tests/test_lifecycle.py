@@ -309,6 +309,51 @@ class Lifecycle(unittest.TestCase):
         self.assertEqual(r.returncode, 1)
         self.assertIn('"判决已落表": false', r.stdout)  # 模板占位行仍在
 
+    def _close_ready(self) -> None:
+        """把除 lessons 之外的收尾项全部补齐：证据、判决、提交。"""
+        (self.proj_dir / "reports" / "W1" / "evidence.json").write_text("{}", encoding="utf-8")
+        plan_path = self.proj_dir / "PLAN.md"
+        plan_path.write_text(re.sub(r"- 判决落表[^\n]*", "- 判决落表（跑后回填）：中（读数 5/8）",
+                                    plan_path.read_text(encoding="utf-8"), count=1),
+                             encoding="utf-8")
+        self._git("add", "-A")
+        self._git("commit", "-q", "-m", "w1")
+
+    def test_close_template_placeholder_lessons_is_red(self):
+        """阴性对照（纸门）：模板自带的占位批次带建仓当日日期和一行"晋升记录：无"，
+        曾让"lessons 今日批次"与"晋升记录行"在一条教训都没写时就通过。"""
+        self._new()
+        self.assertEqual(self._wave().returncode, 0)
+        self._close_ready()
+        r = sh(sys.executable, "-m", "labkit", "close", "W1", cwd=self.proj_dir)
+        self.assertEqual(r.returncode, 1)
+        self.assertIn('"lessons 今日批次": false', r.stdout)
+        self.assertIn('"晋升记录行": false', r.stdout)
+        self.assertIn("占位批次", r.stdout)
+        # 真实落账：在占位批次之后追加一批 → 绿
+        lessons = self.proj_dir / "notes" / "lessons.md"
+        lessons.write_text(lessons.read_text(encoding="utf-8")
+                           + f"\n## {proj.TODAY} · 02批（W1）\n- 教训一。\n\n晋升记录：无（首现，留观）\n",
+                           encoding="utf-8")
+        self._git("add", "-A")
+        self._git("commit", "-q", "-m", "lessons")
+        r = sh(sys.executable, "-m", "labkit", "close", "W1", cwd=self.proj_dir)
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+
+    def test_close_edited_first_batch_counts(self):
+        """就地改写第一批（把占位示例行换成真实教训）也算落账——占位态与真实态两侧都踩过。"""
+        self._new()
+        self.assertEqual(self._wave().returncode, 0)
+        self._close_ready()
+        lessons = self.proj_dir / "notes" / "lessons.md"
+        lessons.write_text(lessons.read_text(encoding="utf-8").replace(
+            "- 建仓即跑 labkit doctor，全绿才开工（占位示例行，可删）。",
+            "- 本波教训：评测器自检门先于一切。"), encoding="utf-8")
+        self._git("add", "-A")
+        self._git("commit", "-q", "-m", "lessons")
+        r = sh(sys.executable, "-m", "labkit", "close", "W1", cwd=self.proj_dir)
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+
     def test_wave_close_cycle_en(self):
         """英文预注册模板：同一道 close 门都要认。"""
         self._new()
