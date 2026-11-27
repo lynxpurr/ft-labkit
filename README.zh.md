@@ -13,7 +13,7 @@
 | 结果被覆盖、反复重读直到好看 | **证据只增不改**。报告写一次；重判是在旧文件旁边落一个新文件。 | 文件已存在时 `labkit.evidence.write_new` 拒写并报错。 |
 | 检查通过，只是因为真实路径从没跑过 | **两侧对照测试**。每道门都配阴性对照：占位或损坏形态必须红，真实形态必须绿。 | 测试套件，每次推送都跑。 |
 | 判分器恒真，没人发现 | **自检门 + 篡改样本**。判分器必须给金标打满分、必须把篡改过的答案判错。 | `labkit.gates.gold_gate` 与 `negative_controls`，由你的评测脚本在跑模型列之前调用。 |
-| 同一个错犯三次 | **有晋升管道的教训账本**。同型教训第二次出现必须晋升：教训 → playbook 规则 → skill → 护栏代码。 | `labkit close` 要求当日 lessons 批次带晋升记录行；管道见 `docs/lessons-distillation.md`。 |
+| 同一个错反复出现 | **有晋升管道的教训账本**。同型教训第二次出现必须晋升：教训 → playbook 规则 → skill → 护栏代码。 | `labkit close` 要求当日 lessons 批次带晋升记录行；管道见 `docs/lessons-distillation.md`。 |
 | "跑完了"（目录存在） | **以末步 checkpoint 为准的幂等判据**，按数据量计算，选中即校验。 | `labkit.ckpt`。 |
 
 ## 状态：v0，治理核心
@@ -29,7 +29,8 @@
 
 ## 快速开始
 
-要求 Linux、Python 3.11 及以上、`git`。零第三方依赖。
+要求 Linux、Python 3.11 及以上、`git`。零第三方依赖。尚未发布到 PyPI，请从本仓安装；
+PyPI 上名为 `labkit` 的包与本项目无关。
 
 ```bash
 git clone https://github.com/lynxpurr/ft-labkit.git
@@ -49,11 +50,17 @@ labkit wave W1 baseline                  # 往 PLAN.md 插入预注册条目
 labkit close W1                          # 证据、判决、lessons、干净工作区缺一项即红
 ```
 
+新目录是一个独立的项目，有自己的 git 仓（`labkit new` 已经执行了 `git init`；
+`labkit close` 要求工作区干净，收尾前先提交）。它的 `AGENTS.md` 是 coding agent 读取协议的入口，
+`.agents/skills/<name>/` 下还有一份 skill。模板里的 skill 和 `tools/README.md` 描述了
+"由 spec 生成 run 脚本"，这个生成器在 [路线图](ROADMAP.md) 里；v0 请自己写这些脚本，遵守同样的纪律。
+
 项目名只许小写字母、数字与单个连字符（1–64 个字符）——它同时是项目 skill 的目录名与 `name`。
 
 `labkit doctor` 报五项检查，任一项红即非零退出：配置文件、引擎可执行文件与解释器、模型目录、
-GPU（free 显存 + 进程表）、训练解释器能否 import `labkit`。它还会校验 `data/SHA256SUMS`
-里登记的每个数据文件的 SHA-256。没有 NVIDIA GPU 时 GPU 门为红，其余读数照常给出。
+GPU（free 显存 + 进程表）、训练解释器能否 import `labkit`。v0 的引擎一项只确认 `labkit.toml`
+里 `swift_bin` 指向一个存在且可执行的文件；`train_python` 可以留空。它还会校验
+`data/SHA256SUMS` 里登记的每个数据文件的 SHA-256。没有 NVIDIA GPU 时 GPU 门为红，其余读数照常给出。
 
 如果机器上还有另一份叫 `labkit` 的包（已安装，或在 `PYTHONPATH` 上），它可能遮蔽这一份：
 `labkit --version` 打印实际运行的那份包的路径；配置的解释器导入的是另一份时，`labkit doctor` 会告警。
@@ -75,6 +82,18 @@ labkit close W1 ──► 判决已填 · 证据在 · lessons 批次 · 晋升�
    └──► 下一个波次 ……
 ```
 
+同一个波次填好之后的样子（数字是假设的）：`labkit wave` 只插入骨架，判决规则要在跑任何东西之前
+由你填死；跑完只补判决那一行，规则原文不动。
+
+```markdown
+### W1 baseline —— pending 2025-01-01
+- 动作形态：用 12k 对数据对 1.7B 底座做 SFT，3 个 epoch；在 350 条 held-out 上评测
+- 预注册：**R-W1** held-out 精确匹配率 ≥ 0.40（贪心解码）+ 护栏（格式合法率 ≥ 0.98）
+  - 过 → W2 把同一配方扩到 4B 底座
+  - 不过 → 就此停止；把负结果写出来，不靠加数据续命
+- 判决落表（跑后回填）：中（精确匹配 0.43，读数见 reports/W1/score-sft.json）
+```
+
 ## 包里有什么
 
 | 模块 | 职责 |
@@ -90,6 +109,36 @@ labkit close W1 ──► 判决已填 · 证据在 · lessons 批次 · 晋升�
 这些件背后的方法见 [docs/methodology.md](docs/methodology.md)，每条规则由哪次事故而来见
 [docs/lessons.md](docs/lessons.md)。
 
+## 在自己的脚本里调用
+
+各道门和证据写入都是普通函数。下面是评测脚本的骨架；`samples` 是你的 held-out 集，`answers` 是模型输出：
+
+```python
+import sys
+from labkit import evidence, gates
+
+def judge(sample, candidate):                 # 你的判分器：只返回布尔值
+    return {"exact": candidate.strip() == sample["answer"]}
+
+def gold(s):
+    return s["answer"]
+
+pre = [
+    gates.gold_gate(samples, gold, judge, required_true=["exact"]),
+    gates.negative_controls(samples, gold, judge,
+                            [("upper", lambda s, t: t.upper())], required_true=["exact"]),
+]
+if gates.run_gates(pre) != 0:                 # 判分器自己有问题：到此为止
+    sys.exit(1)
+
+records = [{"id": s["id"], "generated": evidence.stamp(), "arm": "sft",
+            "summary": judge(s, answers[s["id"]])} for s in samples]
+evidence.write_new_json("reports/W1/score-sft.json", records)   # 只写一次，已存在即拒写
+```
+
+`run_gates` 每道门打印一条 JSON 判决，任一门不过即返回非零退出码，agent 可以链式调用；
+`write_new_json` 只写一次，文件已存在时报错。
+
 ## 设计约束
 
 - **只用标准库。** 零运行时依赖，任何训练 venv 里都能直接跑。
@@ -100,8 +149,8 @@ labkit close W1 ──► 判决已填 · 证据在 · lessons 批次 · 晋升�
 
 ## 语言
 
-治理模板与方法论文档用中文书写（作者的工作语言）。`labkit close` 的关键词中英文都认，
-`labkit wave --lang en` 会插入英文预注册条目。欢迎翻译。
+治理模板与方法论文档用中文书写（作者的工作语言），命令行的帮助与提示目前也是中文。
+`labkit close` 的关键词中英文都认，`labkit wave --lang en` 会插入英文预注册条目。欢迎翻译。
 
 ## 参与
 
