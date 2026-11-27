@@ -4,7 +4,7 @@ All notable changes to `ft-labkit` are recorded here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versions follow
 [semantic versioning](https://semver.org/).
 
-## [0.1.0] — Unreleased
+## [0.1.0] — 2026-11-27
 
 First public release. v0 is the governance core: it carries the method and the
 project skeleton, and nothing that launches a training or inference run.
