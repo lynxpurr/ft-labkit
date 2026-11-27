@@ -38,6 +38,8 @@ Requires Linux, Python 3.11 or newer and `git`. No third-party dependencies.
 ```bash
 git clone https://github.com/lynxpurr/ft-labkit.git
 cd ft-labkit && pip install .            # or: pip install -e .
+# The interpreter you set as train_python in labkit.toml must be able to import labkit too:
+# install into that environment, or export PYTHONPATH="$PWD" before the steps below.
 labkit --version                         # ft-labkit 0.1.0 (path of the package that is running)
 
 labkit new demo-lab                      # creates ./demo-lab from the built-in template
