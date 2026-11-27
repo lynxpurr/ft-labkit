@@ -1,0 +1,73 @@
+{
+  "repository": [
+    ".github/dependabot.yml",
+    ".github/workflows/ci.yml",
+    ".github/workflows/release-files.json",
+    ".github/workflows/security.yml",
+    ".gitignore"
+  ],
+  "build": [
+    "MANIFEST.in",
+    "pyproject.toml"
+  ],
+  "package": [
+    "labkit/__init__.py",
+    "labkit/__main__.py",
+    "labkit/_io.py",
+    "labkit/augment.py",
+    "labkit/ckpt.py",
+    "labkit/config.py",
+    "labkit/evidence.py",
+    "labkit/gates.py",
+    "labkit/gpu.py",
+    "labkit/proj.py",
+    "labkit/templates/labkit.toml.example",
+    "labkit/templates/project/.agents/skills/PROJECT/SKILL.md",
+    "labkit/templates/project/.gitignore",
+    "labkit/templates/project/AGENTS.md",
+    "labkit/templates/project/CONSTITUTION.md",
+    "labkit/templates/project/HANDOFF.md",
+    "labkit/templates/project/PLAN.md",
+    "labkit/templates/project/README.md",
+    "labkit/templates/project/SPEC-INDEX.md",
+    "labkit/templates/project/data/PROVENANCE.md",
+    "labkit/templates/project/notes/lessons.md",
+    "labkit/templates/project/notes/map.md",
+    "labkit/templates/project/notes/playbook.md",
+    "labkit/templates/project/specs/README.md",
+    "labkit/templates/project/specs/templates/spec-template.md",
+    "labkit/templates/project/tools/README.md"
+  ],
+  "licenses": [
+    "LICENSE",
+    "NOTICE"
+  ],
+  "docs": [
+    "AGENTS.md",
+    "CHANGELOG.md",
+    "CONTRIBUTING.md",
+    "README.md",
+    "README.zh.md",
+    "ROADMAP.md",
+    "SECURITY.md",
+    "docs/lessons-distillation.md",
+    "docs/lessons.md",
+    "docs/methodology.md"
+  ],
+  "tests": [
+    "tests/__init__.py",
+    "tests/support.py",
+    "tests/test_augment.py",
+    "tests/test_ckpt.py",
+    "tests/test_config.py",
+    "tests/test_evidence.py",
+    "tests/test_gates.py",
+    "tests/test_gpu.py",
+    "tests/test_lifecycle.py",
+    "tests/test_public_tree.py",
+    "tests/test_release_inventory.py"
+  ],
+  "tools": [
+    "tools/verify_dist.py"
+  ]
+}

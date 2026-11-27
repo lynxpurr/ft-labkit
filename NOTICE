@@ -1,0 +1,22 @@
+ft-labkit
+Copyright 2026 lynxpurr
+
+This product includes or is derived from the following third-party works.
+The project's own source code and documentation are licensed under the
+Apache License, Version 2.0 (see LICENSE).
+
+No third-party source code is bundled. labkit drives external tools as
+separately installed programs through subprocesses and redistributes none
+of them:
+
+1. ms-swift (training and inference framework; the default engine named by
+   engine.swift_bin in labkit.toml)
+   Source: https://github.com/modelscope/ms-swift
+   License: Apache License, Version 2.0
+
+2. nvidia-smi (GPU memory and process queries, part of the NVIDIA driver)
+   Source: https://developer.nvidia.com/nvidia-system-management-interface
+   License: NVIDIA driver license (proprietary software)
+
+labkit does not redistribute models, datasets or adapters. Those remain
+subject to their own licenses in the projects that use them.

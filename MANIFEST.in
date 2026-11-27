@@ -1,0 +1,7 @@
+# 源码包（sdist）清单：许可证与声明、说明文档、docs/ 与 tests/ 都要进源码包。
+# 包内代码与项目模板由 pyproject 的 package-data 带入；.github/ 与 tools/ 只属于仓库，不进包。
+include LICENSE NOTICE
+include README.md README.zh.md
+include AGENTS.md ROADMAP.md CHANGELOG.md CONTRIBUTING.md SECURITY.md
+recursive-include docs *.md
+recursive-include tests *.py

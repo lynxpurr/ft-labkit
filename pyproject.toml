@@ -1,0 +1,67 @@
+[build-system]
+requires = ["setuptools>=77"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ft-labkit"
+version = "0.1.0"
+description = "Pre-registered, evidence-disciplined fine-tuning experiments for coding agents"
+readme = "README.md"
+requires-python = ">=3.11"
+license = "Apache-2.0"
+license-files = ["LICENSE", "NOTICE"]
+authors = [{ name = "lynxpurr" }]
+keywords = ["llm", "fine-tuning", "pre-registration", "experiment-governance", "coding-agent"]
+classifiers = [
+  "Development Status :: 3 - Alpha",
+  "Intended Audience :: Developers",
+  "Intended Audience :: Science/Research",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3 :: Only",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Programming Language :: Python :: 3.14",
+  "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+# stdlib-only：不声明运行时依赖；训练/推理框架只在显式后端路径中经子进程调用
+dependencies = []
+
+[project.urls]
+Homepage = "https://github.com/lynxpurr/ft-labkit"
+Issues = "https://github.com/lynxpurr/ft-labkit/issues"
+Changelog = "https://github.com/lynxpurr/ft-labkit/blob/main/CHANGELOG.md"
+
+[project.scripts]
+labkit = "labkit.proj:main"
+
+[tool.setuptools.packages.find]
+include = ["labkit*"]
+
+# 项目模板必须随包分发：非 editable 安装（pip install .）后 `labkit new` 才有模板可拷。
+# 逐文件显式列出，不用通配符——`**` 不进入点目录（.agents/），曾因此漏掉模板文件。
+# 新增模板文件时必须同步这里：tests/test_public_tree.py 核对两边集合完全相等。
+[tool.setuptools.package-data]
+labkit = [
+  "templates/labkit.toml.example",
+  "templates/project/.gitignore",
+  "templates/project/.agents/skills/PROJECT/SKILL.md",
+  "templates/project/AGENTS.md",
+  "templates/project/CONSTITUTION.md",
+  "templates/project/HANDOFF.md",
+  "templates/project/PLAN.md",
+  "templates/project/README.md",
+  "templates/project/SPEC-INDEX.md",
+  "templates/project/data/PROVENANCE.md",
+  "templates/project/notes/lessons.md",
+  "templates/project/notes/map.md",
+  "templates/project/notes/playbook.md",
+  "templates/project/specs/README.md",
+  "templates/project/specs/templates/spec-template.md",
+  "templates/project/tools/README.md",
+]
+
+[tool.ruff]
+# CI 钉死 ruff 版本后按其缺省规则集检查；这里只声明目标 Python 与行宽
+target-version = "py311"
+line-length = 100

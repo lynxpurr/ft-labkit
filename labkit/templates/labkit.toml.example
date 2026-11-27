@@ -1,0 +1,34 @@
+# labkit 配置样例 — 拷为 labkit.toml 后按本机实况填写（labkit new 已替你拷好）
+# 去硬编码原则：代码中不允许出现本机绝对路径，
+# 一切跨仓路径走本文件 + LABKIT_* 环境变量覆盖。
+
+[engine]
+# 训练/推理引擎的可执行文件（通常在某个装了训练框架的 venv 里）
+swift_bin = "/path/to/venv/bin/swift"
+# 训练栈 venv 的 python（需要在该解释器下 import labkit 的脚本会用；可留空）
+train_python = "/path/to/venv/bin/python"
+# 参考栈 venv 的 python（可留空禁用）
+ref_python = ""
+
+[models]
+# 模型候选目录列表（按序搜索）
+dirs = ["/path/to/models"]
+
+[gpu]
+# 预检门默认需求线（MiB）。分波型需求线写在各 run 脚本变量表里，此处只是兜底。
+# 取值纪律：实测峰值 + 余量，不乐观估计（labkit 仓 docs/methodology.md §8）。
+default_need_mib = 12000
+# 采样周期（秒）
+sample_interval_s = 30
+
+[harness]
+# 评测/证据目录约定（相对各项目仓根）
+reports_dir = "reports"
+data_dir = "data"
+output_dir = "output"
+
+[paths]
+# 跨项目只读借用路径（自定义键值）——项目脚本经
+# labkit.config load().paths["<key>"] 取用，代码层零绝对路径。
+# 例：
+# solver = "/path/to/solver"
