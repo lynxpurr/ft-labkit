@@ -24,7 +24,10 @@
 | 项目模板：宪章、计划、交接、agent 协议 | 评测流水线、run 脚本生成器、泄漏检查、模板对拍 |
 | `gates`、`evidence`、`ckpt`、`gpu`、`augment`、`config` | 证据浏览器、在线双臂对比 |
 
-缺的部件在 [ROADMAP.md](ROADMAP.md) 里写明了行为；它们会在本仓里按行为规格实现。
+缺的部件在 [ROADMAP.md](ROADMAP.md) 里写明了行为；它们会在项目用到时在本仓落地：多数按行为规格实现，
+其中 `evalkit`、`runscript`、`crosscheck` 三个从 [med-diag-lab](https://github.com/lynxpurr/med-diag-lab) 的公开线移植，
+并在 [NOTICE](NOTICE) 署名。
+
 **如果你自带训练与评测脚本**，只想要外面这一层治理，v0 现在就能用。
 
 ## 快速开始

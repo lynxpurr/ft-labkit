@@ -10,12 +10,16 @@ Shipped:
 
 Not shipped: anything that launches a training or inference run.
 
-## Next: implemented here from behavior specs
+## Next: landing in this repository
 
-The training and evaluation pieces below are not ported from anywhere. Each one gets a
-behavior spec in this repository first (under `docs/specs/`), and is then implemented from
-that spec when a real project needs it. A piece lands only with two-sided tests: the broken
-or placeholder form must go red, the real form must go green.
+The training and evaluation pieces below land in this repository when a real project needs
+one of them, and only with two-sided tests: the broken or placeholder form must go red, the
+real form must go green. Nothing is ported from a private repository.
+
+- `evalkit`, `runscript` and `crosscheck` take their starting point from the public line of
+  [med-diag-lab](https://github.com/lynxpurr/med-diag-lab) (Apache-2.0); [NOTICE](NOTICE) credits it when a piece lands.
+- `datacheck`, `splitkit`, `repair` and the consoles are written here from a behavior spec
+  first (under `docs/specs/`).
 
 | Piece | Behavior | Needed when |
 |---|---|---|

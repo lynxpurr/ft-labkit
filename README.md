@@ -25,8 +25,10 @@ labkit handles the part around it that decides whether you can trust the result:
 | project template: charter, plan, handoff, agent protocol | evaluation pipeline, run-script generator, leak checks, template cross-check |
 | `gates`, `evidence`, `ckpt`, `gpu`, `augment`, `config` | evidence browser, live base-vs-adapter console |
 
-The missing pieces are specified in [ROADMAP.md](ROADMAP.md); they will be implemented in
-this repository from behavior specs.
+The missing pieces are specified in [ROADMAP.md](ROADMAP.md) and land in this repository when a
+project needs them: written here from behavior specs, except `evalkit`, `runscript` and
+`crosscheck`, which are ported from the public line of [med-diag-lab](https://github.com/lynxpurr/med-diag-lab)
+and credited in [NOTICE](NOTICE).
 
 **v0 is useful today if you bring your own training and evaluation scripts** and want the
 governance layer around them.
