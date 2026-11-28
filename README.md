@@ -60,8 +60,8 @@ labkit close W1                          # red until evidence, verdict, lessons 
 The new directory is a project of its own, with its own git repository (`labkit new` runs `git init`;
 `labkit close` wants a clean tree, so commit before closing). Its `AGENTS.md` is where your coding
 agent picks up the protocol, with a skill under `.agents/skills/<name>/`. The template's skill and
-`tools/README.md` describe run scripts generated from a spec; that generator is on the
-[roadmap](ROADMAP.md), so in v0 write those scripts yourself and follow the same rules.
+`tools/README.md` carry the rules for run scripts; the generator that will produce them from a
+spec is on the [roadmap](ROADMAP.md), so in v0 write those scripts yourself.
 
 Project names are lowercase letters, digits and single hyphens (1–64 characters), because the
 name is also the directory and `name` of the project's agent skill.

@@ -14,13 +14,13 @@ HANDOFF.md §1 五步开工检查 → labkit doctor 全绿 → 读当前波次�
 
 ## §2 资产坐标
 
-评测/判分脚本 tools/ · run 脚本与 spec tools/ · 证据 reports/<波>/
+评测/判分脚本 tools/ · run 脚本 tools/ · 证据 reports/<波>/
 账本 notes/{lessons,playbook,map}.md · 数据指纹 data/{PROVENANCE.md,SHA256SUMS}。
 
 ## §3 训练标准动作
 
-run 脚本由 spec 生成并自带门：未知档大声失败 / 幂等跳过 / GPU 预检拒跑不静默 OOM /
-后台采样器 / 跑完核对参数快照与末步 ckpt。
+run 脚本自己写，按 `tools/README.md` 的 run 脚本纪律（由 spec 生成的生成器在 labkit 的路线图上）；
+脚本自带门：未知档大声失败 / 幂等跳过 / GPU 预检拒跑不静默 OOM / 后台采样器 / 跑完核对参数快照与末步 ckpt。
 
 ## §4 评测标准动作
 

@@ -55,8 +55,8 @@ labkit close W1                          # 证据、判决、lessons、干净工
 
 新目录是一个独立的项目，有自己的 git 仓（`labkit new` 已经执行了 `git init`；
 `labkit close` 要求工作区干净，收尾前先提交）。它的 `AGENTS.md` 是 coding agent 读取协议的入口，
-`.agents/skills/<name>/` 下还有一份 skill。模板里的 skill 和 `tools/README.md` 描述了
-"由 spec 生成 run 脚本"，这个生成器在 [路线图](ROADMAP.md) 里；v0 请自己写这些脚本，遵守同样的纪律。
+`.agents/skills/<name>/` 下还有一份 skill。模板里的 skill 和 `tools/README.md` 写的是 run 脚本的纪律；
+"由 spec 生成"的生成器在 [路线图](ROADMAP.md) 里，v0 请自己写这些脚本。
 
 项目名只许小写字母、数字与单个连字符（1–64 个字符）——它同时是项目 skill 的目录名与 `name`。
 
