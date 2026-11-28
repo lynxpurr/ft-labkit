@@ -98,6 +98,37 @@ def _resolve_exec(spec: str) -> Path | None:
     return Path(found) if found else None
 
 
+_ENGINE_SMOKE_TIMEOUT = 60  # 秒；--version 要加载训练框架，慢机器上留足余量
+
+
+def _smoke_engine(engine: Path | None) -> bool:
+    """引擎冒烟：真跑一次 `--version`，退出码 0 才算绿；失败时打一行可读的原因。
+
+    只看"文件在位 + 可执行位"时，venv 里的入口脚本在底座解释器被系统升级抽走后
+    仍然在位，一执行就 bad interpreter——门是绿的，训练起跑时才失败。冒烟把这种
+    失败提前到 doctor。
+    """
+    if engine is None or not os.access(engine, os.X_OK):
+        return False
+    try:
+        r = subprocess.run([str(engine), "--version"], capture_output=True, text=True,
+                           encoding="utf-8", errors="replace", timeout=_ENGINE_SMOKE_TIMEOUT,
+                           check=False)
+    except subprocess.TimeoutExpired:
+        out(f"[doctor] engine: {engine} --version 超过 {_ENGINE_SMOKE_TIMEOUT} 秒未返回")
+        return False
+    except OSError as e:
+        out(f"[doctor] engine: {engine} 无法执行（{e.strerror or e}）——文件在位却起不来："
+            "入口脚本指向的解释器多半已不在（bad interpreter）")
+        return False
+    if r.returncode != 0:
+        lines = (r.stderr or r.stdout).strip().splitlines()
+        out(f"[doctor] engine: {engine} --version 退出码 {r.returncode}"
+            + (f"；输出末行：{lines[-1][:200]}" if lines else ""))
+        return False
+    return True
+
+
 def _probe_labkit_import(interp: str) -> bool:
     """探指定解释器能否 import labkit，并回报它导入的是哪一份。
 
@@ -169,7 +200,7 @@ def cmd_doctor() -> int:
     engine = _resolve_exec(cfg.swift_bin)
     train_py = _resolve_exec(cfg.train_python) if cfg.train_python else None
     results.append(gates.checks_gate(
-        {"引擎可执行文件在位": bool(engine and os.access(engine, os.X_OK)),
+        {"引擎 --version 退出码 0": _smoke_engine(engine),
          "训练解释器在位": not cfg.train_python or train_py is not None},
         name="doctor/engine"))
     existing = [d for d in cfg.model_dirs if Path(d).is_dir()]

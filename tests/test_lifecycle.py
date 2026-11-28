@@ -10,6 +10,7 @@ import sys
 import tempfile
 import unittest
 from pathlib import Path
+from unittest import mock
 
 import labkit
 from labkit import proj
@@ -55,8 +56,8 @@ class Lifecycle(unittest.TestCase):
         return fake_exec(self.sandbox, name, body)
 
     def _write_config(self):
-        # 载具/模型检查的通过配置（假路径只要存在+可执行）
-        swift = self._fake_exec("swift", "#!/bin/sh\n")
+        # 载具/模型检查的通过配置（假引擎要真能跑起来：--version 以 0 退出）
+        swift = self._fake_exec("swift", "#!/bin/sh\necho swift 0.0.0\n")
         models = self.sandbox / "models"
         models.mkdir(exist_ok=True)
         (self.proj_dir / "labkit.toml").write_text(
@@ -210,6 +211,56 @@ class Lifecycle(unittest.TestCase):
         r = sh(sys.executable, "-m", "labkit", "doctor", cwd=self.proj_dir,
                path="/nonexistent-bin")
         self.assertIn('"doctor/engine", "pass": false', r.stdout)
+
+    def test_doctor_engine_gate_is_a_smoke_test(self):
+        """引擎门的两侧对照：--version 以 0 退出才绿。
+
+        回归：只看"文件在位 + 可执行位"时，入口脚本指向的解释器被系统升级抽走后
+        门仍然是绿的，训练起跑时才报 bad interpreter。
+        """
+        self._new()
+        toml = self.proj_dir / "labkit.toml"
+
+        def configure(body: str) -> Path:
+            fake = self._fake_exec("swift", body)
+            toml.write_text(f'[engine]\nswift_bin = "{fake}"\n', encoding="utf-8")
+            return fake
+
+        def engine_passes(stdout: str) -> bool:
+            verdict = [ln for ln in stdout.splitlines() if '"doctor/engine"' in ln]
+            return bool(verdict) and '"pass": true' in verdict[0]
+
+        # 真实形态：能跑起来、以 0 退出 → 绿
+        configure("#!/bin/sh\necho swift 0.0.0\n")
+        self.assertTrue(engine_passes(sh(sys.executable, "-m", "labkit", "doctor",
+                                         cwd=self.proj_dir).stdout))
+        # 破坏形态一：文件在位、带可执行位，但入口脚本指向的解释器不存在
+        configure("#!/nonexistent/interpreter/bin/python\n")
+        r = sh(sys.executable, "-m", "labkit", "doctor", cwd=self.proj_dir)
+        self.assertFalse(engine_passes(r.stdout), r.stdout)
+        self.assertIn("bad interpreter", r.stdout)
+        self.assertEqual(r.returncode, 1)
+        # 破坏形态二：能执行，但以非零退出
+        configure("#!/bin/sh\nexit 3\n")
+        r = sh(sys.executable, "-m", "labkit", "doctor", cwd=self.proj_dir)
+        self.assertFalse(engine_passes(r.stdout), r.stdout)
+        self.assertIn("退出码 3", r.stdout)
+        # 破坏形态三：在位，但没有可执行位
+        configure("#!/bin/sh\n").chmod(0o644)
+        self.assertFalse(engine_passes(sh(sys.executable, "-m", "labkit", "doctor",
+                                         cwd=self.proj_dir).stdout))
+        # 破坏形态四：起动了却不返回 → 超时判红。在进程内跑并把超时压到 1 秒，
+        # 补丁才作用得到；脚本用 exec，超时杀掉的就是 sleep 本身，不留孤儿进程。
+        configure("#!/bin/sh\nexec sleep 30\n")
+        cwd = os.getcwd()
+        os.chdir(self.proj_dir)
+        self.addCleanup(os.chdir, cwd)
+        with mock.patch.object(proj, "_ENGINE_SMOKE_TIMEOUT", 1), \
+                contextlib.redirect_stdout(io.StringIO()) as buf:
+            rc = proj.cmd_doctor()
+        self.assertFalse(engine_passes(buf.getvalue()), buf.getvalue())
+        self.assertEqual(rc, 1)
+        self.assertIn("未返回", buf.getvalue())
 
     def test_doctor_import_gate_mixed_readings(self):
         """train 绿 + ref 红 → 门红且子读数逐项如实，修法提示可见。"""
