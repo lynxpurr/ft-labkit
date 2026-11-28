@@ -39,6 +39,10 @@ real form must go green. Nothing is ported from a private repository.
   exits 0 within 60 seconds; it is red when the file is missing or not executable, when it cannot
   be executed (a launcher whose interpreter is gone), when it exits non-zero, or when it does not
   return in time. `tests/test_lifecycle.py` carries the green form and the four red forms.
+  Amended 2026-11-28. `<swift_bin> --version` was red on a working engine: ms-swift's
+  launcher has no `--version` or `-h` and exits 1 with a `KeyError`. The smoke is
+  `<swift_bin> sft -h` instead; the outcomes are unchanged. The tests now also carry a
+  stand-in that dispatches like the real launcher (`--version` red, `sft -h` green).
 - A code-level guard against self-matching process kills (a `stop` subcommand).
 - English versions of the template and the method docs.
 - A PyPI release.

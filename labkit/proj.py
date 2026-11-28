@@ -98,11 +98,14 @@ def _resolve_exec(spec: str) -> Path | None:
     return Path(found) if found else None
 
 
-_ENGINE_SMOKE_TIMEOUT = 60  # 秒；--version 要加载训练框架，慢机器上留足余量
+# 冒烟命令：ms-swift 的启动器把第一个参数当子命令名查表，没有 --version / -h / --help
+# （都以 KeyError 退出 1）；`sft -h` 只读、不碰 GPU，1–2 秒返回（4.5.3 实测）。
+_ENGINE_SMOKE_ARGS = ("sft", "-h")
+_ENGINE_SMOKE_TIMEOUT = 60  # 秒；命令要加载训练框架，慢机器上留足余量
 
 
 def _smoke_engine(engine: Path | None) -> bool:
-    """引擎冒烟：真跑一次 `--version`，退出码 0 才算绿；失败时打一行可读的原因。
+    """引擎冒烟：真跑一次 `sft -h`，退出码 0 才算绿；失败时打一行可读的原因。
 
     只看"文件在位 + 可执行位"时，venv 里的入口脚本在底座解释器被系统升级抽走后
     仍然在位，一执行就 bad interpreter——门是绿的，训练起跑时才失败。冒烟把这种
@@ -110,12 +113,13 @@ def _smoke_engine(engine: Path | None) -> bool:
     """
     if engine is None or not os.access(engine, os.X_OK):
         return False
+    cmd = f"{engine} {' '.join(_ENGINE_SMOKE_ARGS)}"
     try:
-        r = subprocess.run([str(engine), "--version"], capture_output=True, text=True,
+        r = subprocess.run([str(engine), *_ENGINE_SMOKE_ARGS], capture_output=True, text=True,
                            encoding="utf-8", errors="replace", timeout=_ENGINE_SMOKE_TIMEOUT,
                            check=False)
     except subprocess.TimeoutExpired:
-        out(f"[doctor] engine: {engine} --version 超过 {_ENGINE_SMOKE_TIMEOUT} 秒未返回")
+        out(f"[doctor] engine: {cmd} 超过 {_ENGINE_SMOKE_TIMEOUT} 秒未返回")
         return False
     except OSError as e:
         out(f"[doctor] engine: {engine} 无法执行（{e.strerror or e}）——文件在位却起不来："
@@ -123,7 +127,7 @@ def _smoke_engine(engine: Path | None) -> bool:
         return False
     if r.returncode != 0:
         lines = (r.stderr or r.stdout).strip().splitlines()
-        out(f"[doctor] engine: {engine} --version 退出码 {r.returncode}"
+        out(f"[doctor] engine: {cmd} 退出码 {r.returncode}"
             + (f"；输出末行：{lines[-1][:200]}" if lines else ""))
         return False
     return True
@@ -200,7 +204,7 @@ def cmd_doctor() -> int:
     engine = _resolve_exec(cfg.swift_bin)
     train_py = _resolve_exec(cfg.train_python) if cfg.train_python else None
     results.append(gates.checks_gate(
-        {"引擎 --version 退出码 0": _smoke_engine(engine),
+        {"引擎 sft -h 退出码 0": _smoke_engine(engine),
          "训练解释器在位": not cfg.train_python or train_py is not None},
         name="doctor/engine"))
     existing = [d for d in cfg.model_dirs if Path(d).is_dir()]
