@@ -38,3 +38,5 @@ AGENTS.md 红线节。
 ## §7 维护约定
 
 判分/数据/超参改动与本文件同 commit。
+新增或修改检查/门时，先过 notes/playbook.md §4 的检查器规则（能变红、防自匹配、只看
+git 索引、常驻读数当场定性、检查接到门上）；逐条形状见 labkit 仓 docs/lessons.md 的 A 节。
