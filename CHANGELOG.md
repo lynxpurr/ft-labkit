@@ -13,6 +13,12 @@ All notable changes to `ft-labkit` are recorded here. The format follows
   removed, and to fail only when a run started. `--version` is not used: ms-swift's
   launcher has no such flag and exits 1 with a `KeyError`.
 
+### Fixed
+
+- The project template's skill and `tools/README.md` no longer tell a new project that run
+  scripts are generated from a spec. That generator is still on the roadmap, so the template
+  now says to write the scripts by hand and follow the same rules.
+
 ## [0.1.0a1] — 2026-11-28
 
 First public prerelease. v0 is the governance core: it carries the method and the
