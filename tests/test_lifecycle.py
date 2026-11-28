@@ -56,7 +56,7 @@ class Lifecycle(unittest.TestCase):
         return fake_exec(self.sandbox, name, body)
 
     def _write_config(self):
-        # 载具/模型检查的通过配置（假引擎要真能跑起来：--version 以 0 退出）
+        # 载具/模型检查的通过配置（假引擎要真能跑起来：sft -h 以 0 退出）
         swift = self._fake_exec("swift", "#!/bin/sh\necho swift 0.0.0\n")
         models = self.sandbox / "models"
         models.mkdir(exist_ok=True)
@@ -213,7 +213,7 @@ class Lifecycle(unittest.TestCase):
         self.assertIn('"doctor/engine", "pass": false', r.stdout)
 
     def test_doctor_engine_gate_is_a_smoke_test(self):
-        """引擎门的两侧对照：--version 以 0 退出才绿。
+        """引擎门的两侧对照：冒烟命令（sft -h）以 0 退出才绿。
 
         回归：只看"文件在位 + 可执行位"时，入口脚本指向的解释器被系统升级抽走后
         门仍然是绿的，训练起跑时才报 bad interpreter。
@@ -261,6 +261,25 @@ class Lifecycle(unittest.TestCase):
         self.assertFalse(engine_passes(buf.getvalue()), buf.getvalue())
         self.assertEqual(rc, 1)
         self.assertIn("未返回", buf.getvalue())
+
+    def test_doctor_engine_smoke_matches_real_launcher(self):
+        """冒烟命令要对得上真引擎。ms-swift 的启动器把第一个参数当子命令名查表：--version、-h、
+        --help、help 都以 KeyError 退出 1，只有子命令（如 sft -h）以 0 退出（4.5.3 实测）。
+        这里的假引擎按同样的规则分发——上一版判据写的是 --version，对一个好好的引擎判了红。"""
+        self._new()
+        fake = self._fake_exec(
+            "swift",
+            '#!/bin/sh\ncase "$1" in sft|infer|export) exit 0;; '
+            '*) echo "KeyError: \'$1\'" >&2; exit 1;; esac\n')
+        # 替身确实像真启动器：拒绝 --version
+        r = sh(str(fake), "--version")
+        self.assertEqual((r.returncode, r.stderr.strip()), (1, "KeyError: '--version'"))
+        # 缺省的冒烟命令在它上面过
+        self.assertTrue(proj._smoke_engine(fake))
+        (self.proj_dir / "labkit.toml").write_text(f'[engine]\nswift_bin = "{fake}"\n', encoding="utf-8")
+        r = sh(sys.executable, "-m", "labkit", "doctor", cwd=self.proj_dir)
+        verdict = [ln for ln in r.stdout.splitlines() if '"doctor/engine"' in ln]
+        self.assertTrue(verdict and '"pass": true' in verdict[0], r.stdout)
 
     def test_doctor_import_gate_mixed_readings(self):
         """train 绿 + ref 红 → 门红且子读数逐项如实，修法提示可见。"""

@@ -8,9 +8,10 @@ All notable changes to `ft-labkit` are recorded here. The format follows
 
 ### Changed
 
-- `labkit doctor`: the engine check now runs `<swift_bin> --version` and is green only
+- `labkit doctor`: the engine check now runs `<swift_bin> sft -h` and is green only
   when it exits 0. It used to pass for a launcher script whose interpreter had been
-  removed, and to fail only when a run started.
+  removed, and to fail only when a run started. `--version` is not used: ms-swift's
+  launcher has no such flag and exits 1 with a `KeyError`.
 
 ## [0.1.0a1] — 2026-11-28
 

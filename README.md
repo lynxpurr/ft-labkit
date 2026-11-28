@@ -68,7 +68,7 @@ name is also the directory and `name` of the project's agent skill.
 
 `labkit doctor` reports five checks and exits non-zero if any is red: config file, engine binary
 and interpreter, model directory, GPU (free memory plus the process table), and whether your
-training interpreter can import `labkit`. The engine check runs `<swift_bin> --version` and is green
+training interpreter can import `labkit`. The engine check runs `<swift_bin> sft -h` and is green
 only when it exits 0, so a launcher script whose interpreter has been removed fails here instead of
 when a run starts; `train_python` may be left empty. It also
 verifies the SHA-256 of every data file registered in `data/SHA256SUMS`. Without an NVIDIA GPU
