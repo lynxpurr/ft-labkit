@@ -35,6 +35,10 @@ real form must go green. Nothing is ported from a private repository.
 ## Candidates
 
 - `doctor` engine gate: smoke the binary (`--version`) instead of checking existence and the exec bit.
+  Accepted 2026-11-28. `doctor/engine` is green for the engine only when `<swift_bin> --version`
+  exits 0 within 60 seconds; it is red when the file is missing or not executable, when it cannot
+  be executed (a launcher whose interpreter is gone), when it exits non-zero, or when it does not
+  return in time. `tests/test_lifecycle.py` carries the green form and the four red forms.
 - A code-level guard against self-matching process kills (a `stop` subcommand).
 - English versions of the template and the method docs.
 - A PyPI release.

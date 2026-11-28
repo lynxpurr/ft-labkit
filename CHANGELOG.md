@@ -4,6 +4,14 @@ All notable changes to `ft-labkit` are recorded here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versions follow
 [semantic versioning](https://semver.org/).
 
+## [Unreleased]
+
+### Changed
+
+- `labkit doctor`: the engine check now runs `<swift_bin> --version` and is green only
+  when it exits 0. It used to pass for a launcher script whose interpreter had been
+  removed, and to fail only when a run started.
+
 ## [0.1.0a1] — 2026-11-28
 
 First public prerelease. v0 is the governance core: it carries the method and the

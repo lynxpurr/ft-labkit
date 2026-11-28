@@ -61,8 +61,9 @@ labkit close W1                          # 证据、判决、lessons、干净工
 项目名只许小写字母、数字与单个连字符（1–64 个字符）——它同时是项目 skill 的目录名与 `name`。
 
 `labkit doctor` 报五项检查，任一项红即非零退出：配置文件、引擎可执行文件与解释器、模型目录、
-GPU（free 显存 + 进程表）、训练解释器能否 import `labkit`。v0 的引擎一项只确认 `labkit.toml`
-里 `swift_bin` 指向一个存在且可执行的文件；`train_python` 可以留空。它还会校验
+GPU（free 显存 + 进程表）、训练解释器能否 import `labkit`。引擎一项会真跑一次
+`swift_bin --version`，退出码为 0 才算绿——入口脚本指向的解释器被抽走时，在这里就红，而不是等训练起跑才失败；
+`train_python` 可以留空。它还会校验
 `data/SHA256SUMS` 里登记的每个数据文件的 SHA-256。没有 NVIDIA GPU 时 GPU 门为红，其余读数照常给出。
 
 如果机器上还有另一份叫 `labkit` 的包（已安装，或在 `PYTHONPATH` 上），它可能遮蔽这一份：
